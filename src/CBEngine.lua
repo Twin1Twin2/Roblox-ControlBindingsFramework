@@ -1,4 +1,6 @@
 
+local UserInputService = game:GetService("UserInputService")
+
 local ActionBinding = require(script.Parent.ActionBinding)
 local InputBinding = require(script.Parent.InputBinding)
 
@@ -305,6 +307,13 @@ function CBEngine:GetInputSystem(name)
 end
 
 
+function CBEngine:ClearInputSystemInput()
+    for _, inputSystem in pairs(self._InputSystems) do
+        inputSystem:ClearInput()
+    end
+end
+
+
 function CBEngine:_AddInputSystem(inputSystem)
     inputSystem.Engine = self
     table.insert(self._InputSystems, inputSystem)
@@ -321,23 +330,34 @@ function CBEngine:_RemoveInputSystem(inputSystem)
 
     inputSystem.Engine = nil
 
-    AttemptRemovalFromTable(self._UpdatedInputSystems, inputSystem)
+    self:_RemoveInputSystemFromUpdater(inputSystem)
     AttemptRemovalFromTable(self._InputSystems, inputSystem)
 end
 
 
-function CBEngine:_InitializeInputSystem(inputSystem)
-    if (inputSystem._CanUpdate == true) then
-        table.insert(self._UpdatedInputSystems, inputSystem)
-    end
+function CBEngine:_AddInputSystemToUpdater(inputSystem)
+    table.insert(self._UpdatedInputSystems, inputSystem)
+end
 
+
+function CBEngine:_RemoveInputSystemFromUpdater(inputSystem)
+    AttemptRemovalFromTable(self._UpdatedInputSystems, inputSystem)
+end
+
+
+function CBEngine:_InitializeInputSystem(inputSystem)
     inputSystem:Initialize()
     inputSystem._IsInitialized = true
 
     for _, inputBindingName in pairs(inputSystem.InputBindingList) do
         self:RegisterInputBindingToSystem(inputSystem, inputBindingName)
     end
+
+    if (inputSystem._CanUpdate == true) then
+        self:_AddInputSystemToUpdater(inputSystem)
+    end
 end
+
 
 
 function CBEngine:InitializeInputSystems()
@@ -347,6 +367,7 @@ function CBEngine:InitializeInputSystems()
         end
     end
 end
+
 
 
 function CBEngine:AddInputSystem(inputSystem, initialize)
@@ -364,6 +385,20 @@ function CBEngine:RemoveInputSystem(inputSystem)
     assert(self:IsInputSystem(inputSystem) == true)
 
     self:_RemoveInputSystem(inputSystem)
+end
+
+
+function CBEngine:AddInputSystemToUpdater(inputSystem)
+    assert(self:IsInputSystem(inputSystem) == true and TableContains(self._InputSystems, inputSystem))
+
+    self:_AddInputSystemToUpdater(inputSystem)
+end
+
+
+function CBEngine:RemoveInputSystemFromUpdater(inputSystem)
+    assert(self:IsInputSystem(inputSystem) == true and TableContains(self._InputSystems, inputSystem))
+
+    self:_RemoveInputSystemFromUpdater(inputSystem)
 end
 
 
@@ -410,6 +445,14 @@ function CBEngine.new()
     self._UpdatedInputSystems = {}
 
     self._IsControlBindingsEngine = true
+
+    UserInputService.TextBoxFocused:Connect(function()
+        self:ClearInputSystemInput()
+    end)
+
+    UserInputService.WindowFocusReleased:Connect(function()
+        self:ClearInputSystemInput()
+    end)
 
 
     return self
