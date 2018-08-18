@@ -139,7 +139,7 @@ function InputSystem.new(name)
 
     local self = setmetatable({}, InputSystem)
 
-    self.Name = ""
+    self.Name = name
 
     self.Engine = nil
 
