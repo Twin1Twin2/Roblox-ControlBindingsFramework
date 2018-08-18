@@ -40,10 +40,10 @@ end
 
 
 for _, InputSystemModule in pairs(inputSystemModules:GetChildren()) do
-    local InputSystemName = InputSystemModule.Name
-    local InputSystem = require(InputSystemModule)    --idc if your module breaks. make sure it doesn't
+    local inputSystemName = inputSystemModule.Name
+    local inputSystem = require(inputSystemModule)    --idc if your module breaks. make sure it doesn't
     
-    ControlBindingsFramework[InputSystemName] = InputSystem
+    ControlBindingsFramework[inputSystemName] = inputSystem
 end
 
 
