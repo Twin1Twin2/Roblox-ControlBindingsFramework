@@ -42,12 +42,6 @@ for i, v in pairs (GAMEPAD_INPUT_BINDING_POSTFIXES) do
     GAMEPAD_INPUT_ENUMTYPES[v.Name] = i;
 end
 
-local GAMEPAD_INPUT_CHANGED_INPUTS = {
-    [Enum.KeyCode.ButtonR2.Name] = true;
-    [Enum.KeyCode.ButtonL2.Name] = true;
-    [Enum.KeyCode.Thumbstick1.Name] = true;
-    [Enum.KeyCode.Thumbstick2.Name] = true;
-}
 
 local GAMEPAD_THUMBSTICK_INPUTS = {
     [Enum.KeyCode.Thumbstick1.Name] = true;
@@ -94,7 +88,13 @@ GamepadInputSystem.GAMEPAD_INPUT_BINDING_PREFIXES = GAMEPAD_INPUT_BINDING_PREFIX
 GamepadInputSystem.GAMEPAD_INDEXES = GAMEPAD_INDEXES
 
 
-function GamepadInputSystem:UpdateThumbstick(thumbstickName, position)
+function GamepadInputSystem:UpdateThumbstick(thumbstickName, userInputState, inputObject)
+    local position = inputObject.Position
+
+    if (position.Magnitude < self.ThumbstickDeadzoneAmount) then
+        position = Vector3.new(0, 0, 0)
+    end
+
     local xPos = position.X
     local yPos = position.Y
 
@@ -109,30 +109,19 @@ function GamepadInputSystem:UpdateThumbstick(thumbstickName, position)
 end
 
 
-function GamepadInputSystem:UpdateAnalogButton(buttonName, position)
+function GamepadInputSystem:UpdateAnalogButton(buttonName, userInputState, inputObject)
+    local position = inputObject.Position.Z
+
     self:SetBindingInput(buttonName, position)
 end
 
 
-function GamepadInputSystem:UpdateChangedInputBinding(inputName, inputObject, keyCodeName)
-    self.ChangedInputBindings[inputName].Changed = true
-
-    if (GAMEPAD_THUMBSTICK_INPUTS[keyCodeName]) then
-        self:UpdateThumbstick(inputName, inputObject)
-    elseif (GAMEPAD_ANALOG_BUTTON_INPUTS[keyCodeName]) then
-        self:UpdateAnalogButton(inputName, inputObject)
-    end
-end
-
-
 function GamepadInputSystem:UpdateDigitalInputBinding(buttonName, userInputState)
-    local newInput = 0
-
-    if (userInputState == Enum.UserInputState.Begin or userInputState == Enum.UserInputState.Changed) then
-        newInput = 1
+    if (userInputState == Enum.UserInputState.Begin or userInputState == Enum.UserInputState.Change) then
+        self:SetBindingInput(buttonName, 1)
+    elseif (userInputState == Enum.UserInputState.End) then
+        self:SetBindingInput(buttonName, 0)
     end
-
-    self:SetBindingInput(buttonName, newInput)
 end
 
 
@@ -141,10 +130,12 @@ function GamepadInputSystem:UpdateInput(actionName, userInputState, inputObject)
     local keyCodeName = keyCode.Name
     local inputName = GAMEPAD_INPUT_ENUMTYPES[keyCodeName]
 
-    asssert(inputName ~= nil)
+    assert(inputName ~= nil)
 
-    if (GAMEPAD_INPUT_CHANGED_INPUTS[keyCodeName] == true) then
-        self:UpdateChangedInputBinding(inputName, inputObject, keyCodeName)
+    if (GAMEPAD_THUMBSTICK_INPUTS[keyCodeName]) then
+        self:UpdateThumbstick(inputName, userInputState, inputObject)
+    elseif (GAMEPAD_ANALOG_BUTTON_INPUTS[keyCodeName]) then
+        self:UpdateAnalogButton(inputName, userInputState, inputObject)
     else
         self:UpdateDigitalInputBinding(inputName, userInputState)
     end
@@ -164,9 +155,7 @@ function GamepadInputSystem:Enable()
         self:UpdateInput(actionName, userInputState, inputObject)
     end
 
-    ContextActionService:BindAction(self.BindActionNamee, OnInput, false, self.GamepadEnum)
-
-    self.Engine:AddInputSystemToUpdater(self)
+    ContextActionService:BindAction(self.BindActionName, OnInput, false, self.GamepadEnum)
 end
 
 
@@ -174,8 +163,6 @@ function GamepadInputSystem:Disable()
     self.Enabled = false
 
     ContextActionService:UnbindAction(self.BindActionName)
-
-    self.Engine:RemoveInputSystemFromUpdater(self)
 end
 
 
@@ -205,13 +192,6 @@ function GamepadInputSystem:Initialize()
     for _, inputBindingName in pairs(inputBindingList) do
         table.insert(self.InputBindingList, inputBindingName)
     end
-
-    for inputChangedInputName, _ in pairs(GAMEPAD_INPUT_CHANGED_INPUTS) do
-        self.ChangedInputBindings[inputChangedInputName] = {
-            Changed = false;
-            Stopped = true;
-        }
-    end
 end
 
 
@@ -229,46 +209,15 @@ function GamepadInputSystem:BindingRemoved(name, inputBinding)
 end
 
 
-function GamepadInputSystem:UpdateChangedThumbstick(name, data)
-    if (data.Changed == true) then
-        data.Changed = false
-        data.Stopped = false
-    elseif (data.Stopped == false) then
-        data.Stopped = true
-        data:UpdateThumbstick(name, Vector3.new(0, 0, 0))
-    end
-end
-
-
-function GamepadInputSystem:UpdateChangedAnalogButton(name, data)
-    if (data.Changed == true) then
-        data.Changed = false
-        data.Stopped = false
-    elseif (data.Stopped == false) then
-        data.Stopped = true
-        data:UpdateAnalogButton(name, 0)
-    end
-end
-
-
-function GamepadInputSystem:Update()
-    for keyCodeName, _ in pairs(GAMEPAD_THUMBSTICK_INPUTS) do
-        local inputName = GAMEPAD_INPUT_ENUMTYPES[keyCodeName]
-        self:UpdateChangedThumbstick(inputName, self.ChangedInputBindings[keyCodeName])
-    end
-
-    for keyCodeName, _ in pairs(GAMEPAD_INPUT_CHANGED_INPUTS) do
-        local inputName = GAMEPAD_INPUT_ENUMTYPES[keyCodeName]
-        self:UpdateChangedAnalogButton(inputName, self.ChangedInputBindings[keyCodeName])
-    end
-end
-
-
-function GamepadInputSystem.new(gamepadNumber)
+function GamepadInputSystem.new(gamepadNumber, usePrefix)
     assert(type(gamepadNumber) == "number" and gamepadNumber > 0 and gamepadNumber <= 8)
 
     local gamepadEnum = GAMEPAD_INDEXES[gamepadNumber]
-    local inputBindingPrefix = GAMEPAD_INPUT_BINDING_PREFIXES[gamepadNumber]
+    local inputBindingPrefix = ""
+
+    if (usePrefix ~= false) then
+        inputBindingPrefix = GAMEPAD_INPUT_BINDING_PREFIXES[gamepadNumber]
+    end
 
     local inputSystemName = "Gamepad" .. tostring(gamepadNumber) .. "InputSystem"
 
@@ -276,11 +225,11 @@ function GamepadInputSystem.new(gamepadNumber)
 
     self.GamepadEnum = gamepadEnum
     self.InputBindingPrefix = inputBindingPrefix
-    self.BindActionName = nil
+    self.BindActionName = inputSystemName
     
     self.Enabled = false
 
-    self.ChangedInputBindings = {}
+    self.ThumbstickDeadzoneAmount = 0.15
     
 
     return self
