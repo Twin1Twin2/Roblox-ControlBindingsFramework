@@ -30,7 +30,7 @@ end
 
 
 function ControlBindingsFramework:Disable()
-    
+    RunService:UnbindFromRenderStep("ControlBindingsFramework_EngineUpdate")
 end
 
 
