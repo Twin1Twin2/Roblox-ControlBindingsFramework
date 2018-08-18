@@ -95,7 +95,7 @@ end
 function MouseMovementInputSystem:Disable()
     self.Enabled = false
 
-    ContextActionService:BindAction(CAS_BIND_ACTION_NAME, OnInput, false, Enum.UserInputType.MouseMovement)
+    ContextActionService:UnbindAction(CAS_BIND_ACTION_NAME)
 
     self.Engine:RemoveInputSystemFromUpdater(self)
 end
