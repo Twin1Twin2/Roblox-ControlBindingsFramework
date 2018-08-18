@@ -60,7 +60,6 @@ function InputBinding.new(name)
     self.Name = name
 
     self.Input = 0.0
-    self.InputChanged = false
 
     self._ActionBindings = {}
     self._InputSystems = {}
