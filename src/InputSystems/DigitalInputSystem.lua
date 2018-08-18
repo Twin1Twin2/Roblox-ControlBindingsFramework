@@ -1,7 +1,7 @@
 
 local ContextActionService = game:GetService("ContextActionService")
 
-local InputManager = require(script.Parent.InputManager)
+local InputSystem = require(script.Parent.Parent.InputSystem)
 
 
 local ENUM_KEYCODE_IGNORE_LIST   = {   
@@ -75,7 +75,7 @@ function DigitalInputBindingManager.new(inputEnum, inputBinding)
 end
 
 
-local DigitalInputSystem = InputManager:Extend("DigitalInputSystem")
+local DigitalInputSystem = InputSystem:Extend("DigitalInputSystem")
 
 DigitalInputSystem.InputEnums = {}
 DigitalInputSystem.InputBindingManagers = {}
@@ -85,7 +85,7 @@ function DigitalInputSystem:AddInputBindingFromEnum(enumItem)
     local bindingName = enumItem.Name
 
     table.insert(self.InputBindingList, enumItem.Name)
-    inputEnums[bindingName] = enumItem
+    self.InputEnums[bindingName] = enumItem
 end
 
 

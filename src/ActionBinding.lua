@@ -2,7 +2,7 @@
 -- It's input is defined by the InputBindings it is subscribed to
 --
 
-local Table = require(script.Table)
+local Table = require(script.Parent.Table)
 
 local TableContains = Table.Contains
 local AttemptRemovalFromTable = Table.AttemptRemovalFromTable
@@ -60,6 +60,7 @@ function ActionBinding:Update()
     end
 
     self.Input = input
+    self.IsDown = input > 0
 end
 
 
@@ -75,6 +76,7 @@ function ActionBinding.new(name)
 
     self.Name = name
     self.Input = 0
+    self.IsDown = false
 
     self.Engine = nil
 

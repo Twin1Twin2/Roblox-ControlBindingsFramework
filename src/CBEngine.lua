@@ -74,7 +74,7 @@ function CBEngine:AddActionBinding(actionBinding, inputBindingNames)
     end
 
     if (type(inputBindingNames) == "table") then
-        Table.Merge(inputBindingNames, actionBinding.InputBindingList)
+        --Table.Merge(inputBindingNames, actionBinding.InputBindingList)
     else
         inputBindingNames = actionBinding.InputBindingList
     end
@@ -266,7 +266,9 @@ function CBEngine:AddInputBindingsToAction(actionBinding, ...)
         inputBindingNames = inputBindingNames[1]
     end
 
-
+    for _, inputBindingName in pairs(inputBindingNames) do
+        self:_AddInputBindingToAction(actionBinding, inputBindingName)
+    end
 end
 
 
@@ -281,7 +283,9 @@ function CBEngine:RemoveInputBindingsFromAction(actionBinding, ...)
         inputBindingNames = inputBindingNames[1]
     end
 
-
+    for _, inputBindingName in pairs(inputBindingNames) do
+        self:_RemoveInputBindingFromAction(actionBinding, inputBindingName)
+    end
 end
 
 
@@ -373,6 +377,27 @@ end
 function CBEngine:Update()
     self:_UpdateInputSystems()
     self:_UpdateActionBindings()
+end
+
+
+function CBEngine:Destroy()
+
+end
+
+
+function CBEngine:SetConfiguration(config)
+    --clear old config
+
+    local inputSystems = config.InputSystems
+    local actionBindings = config.ActionBindings
+
+    for _, inputSystem in pairs(inputSystems) do
+        self:AddInputSystem(inputSystem)
+    end
+
+    for actionBindingName, inputBindingNames in pairs(actionBindings) do
+        self:AddActionBinding(actionBindingName, inputBindingNames)
+    end
 end
 
 

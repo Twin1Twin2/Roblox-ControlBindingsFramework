@@ -2,7 +2,7 @@
 -- Has a fixed set of InputBindings 'InputBindingList' that are created and added when this object is added to the engine
 --
 
-local Table = require(script.Table)
+local Table = require(script.Parent.Table)
 
 local TableContains = Table.Contains
 local AttemptRemovalFromTable = Table.AttemptRemovalFromTable

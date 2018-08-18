@@ -21,20 +21,16 @@ ControlBindingsFramework._UpdateConnection = nil
 
 
 function ControlBindingsFramework:Enable()
-    if (self._UpdateConnection ~= nil) then
-        return
+    local function UpdateEngine()
+        self.Engine:Update()
     end
 
-    self._UpdateConnection = RunService.RenderStepped:Connect(function()
-        self.Engine:Update()
-    end)
+    RunService:BindToRenderStep("ControlBindingsFramework_EngineUpdate", Enum.RenderPriority.Input.Value + 1, UpdateEngine)
 end
 
 
 function ControlBindingsFramework:Disable()
-    if (self._UpdateConnection ~= nil) then
-        self._UpdateConnection:Destroy()
-    end
+    
 end
 
 
