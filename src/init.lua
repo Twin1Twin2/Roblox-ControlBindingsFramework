@@ -39,7 +39,7 @@ function ControlBindingsFramework:Get() --until i figure stuff out
 end
 
 
-for _, InputSystemModule in pairs(inputSystemModules:GetChildren()) do
+for _, inputSystemModule in pairs(inputSystemModules:GetChildren()) do
     local inputSystemName = inputSystemModule.Name
     local inputSystem = require(inputSystemModule)    --idc if your module breaks. make sure it doesn't
     
