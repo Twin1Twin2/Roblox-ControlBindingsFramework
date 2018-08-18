@@ -4,7 +4,8 @@ local ContextActionService = game:GetService("ContextActionService")
 local InputSystem = require(script.Parent.Parent.InputSystem)
 
 
-local ENUM_KEYCODE_IGNORE_LIST   = {   
+local ENUM_KEYCODE_IGNORE_LIST   = {
+    --[[
     [Enum.KeyCode.ButtonX.Name] = true;
     [Enum.KeyCode.ButtonY.Name] = true;
     [Enum.KeyCode.ButtonA.Name] = true;
@@ -21,6 +22,7 @@ local ENUM_KEYCODE_IGNORE_LIST   = {
     [Enum.KeyCode.DPadRight.Name] = true;
     [Enum.KeyCode.DPadUp.Name] = true;
     [Enum.KeyCode.DPadDown.Name] = true;
+    --]]
     [Enum.KeyCode.Thumbstick1.Name] = true;
     [Enum.KeyCode.Thumbstick2.Name] = true;
 }
