@@ -56,8 +56,8 @@ function MouseMovementInputSystem:SetPositionInput(newVector)
     local yDiff = difference.Y
 
     self:SetBindingInput("MOUSE_MOVE", difference.Magnitude)
-    self:SetBindingInput("MOUSE_MOVE_X", xDiff)
-    self:SetBindingInput("MOUSE_MOVE_Y", yDiff)
+    self:SetBindingInput("MOUSE_MOVE_X", math.abs(xDiff))
+    self:SetBindingInput("MOUSE_MOVE_Y", math.abs(yDiff))
 
     self:SetBindingInput("MOUSE_MOVE_LEFT", -math.min(0, xDiff))
     self:SetBindingInput("MOUSE_MOVE_RIGHT", math.max(0, xDiff))
