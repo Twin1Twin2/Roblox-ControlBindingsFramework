@@ -82,6 +82,13 @@ function InputSystem:RemoveBinding(name, inputBinding)
 end
 
 
+function InputSystem:ClearInput()
+    for _, inputBinding in pairs(self.InputBindings) do
+        inputBinding.Input = 0
+    end
+end
+
+
 function InputSystem:Initialize()
 
 end
