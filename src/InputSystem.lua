@@ -56,6 +56,8 @@ function InputSystem:_AddBinding(name, inputBinding)
     self.InputBindings[name] = inputBinding
     inputBinding:RegisterSystem(self.Name, self)
 
+    self.InputBindingCount = self.InputBindingCount + 1
+
     self:BindingAdded(name, inputBinding)
 end
 
@@ -68,6 +70,8 @@ function InputSystem:_RemoveBinding(name, inputBinding)
     self.InputBindings[name] = nil
     inputBinding:UnregisterSystem(self.Name, self)
 
+    self.InputBindingCount = self.InputBindingCount - 1
+
     self:BindingRemoved(name, inputBinding)
 end
 
@@ -79,6 +83,15 @@ end
 
 function InputSystem:RemoveBinding(name, inputBinding)
     self:_RemoveBinding(name, inputBinding)
+end
+
+
+function InputSystem:SetBindingInput(name, input)
+    local inputBinding = self.InputBindings[name]
+
+    if (inputBinding ~= nil) then
+        inputBinding.Input = input
+    end
 end
 
 
@@ -132,6 +145,8 @@ function InputSystem.new(name)
 
     self.InputBindings = {}
     self.InputBindingList = {}
+
+    self.InputBindingCount = 0
 
     self._IsInputSystem = true
     self._IsInitialized = false
