@@ -2,6 +2,7 @@
 -- It's input is defined by the InputBindings it is subscribed to
 --
 
+local Signal = require(script.Parent.Signal)
 local Table = require(script.Parent.Table)
 
 local TableContains = Table.Contains
@@ -44,27 +45,49 @@ function ActionBinding:RemoveInputBinding(name)
     assert(type(name) == "string")
     assert(self.Engine ~= nil)
 
-    self.Engine:RemoveInputBindingsToAction(self, name)
+    self.Engine:RemoveInputBindingsFromAction(self, name)
 end
 
 
 function ActionBinding:Update()
-    local input = 0
+    local currentInput = self.Input
+    local newInput = 0
 
     for _, inputBinding in pairs(self._InputBindings) do
         local inputAmount = inputBinding.Input
 
-        if (inputAmount > input) then
-            input = inputAmount
+        if (inputAmount > newInput) then
+            newInput = inputAmount
         end
     end
 
-    self.Input = input
-    self.IsDown = input > 0
+    self.Input = newInput
+
+    if (newInput > 0) then
+        self.IsDown = true
+        self.OnInputDown:Fire(newInput)
+    else
+        self.IsDown = false
+    end
+
+    if (currentInput ~= newInput) then
+        if (currentInput == 0) then
+			self.OnInputBegan:Fire()
+		elseif (newInput == 0) then
+			self.OnInputEnded:Fire()
+		else
+            self.OnInputChanged:Fire()
+        end
+    end
 end
 
 
 function ActionBinding:Destroy()
+    self.OnInputDown:Destroy()
+    self.OnInputBegan:Destroy()
+    self.OnInputEnded:Destroy()
+    self.OnInputChanged:Destroy()
+
     setmetatable(self, nil)
 end
 
@@ -83,6 +106,11 @@ function ActionBinding.new(name)
     self.InputBindingList = {}  --a list of input binding names
 
     self._InputBindings = {}
+
+    self.OnInputDown = Signal.new()
+    self.OnInputBegan = Signal.new()
+    self.OnInputEnded = Signal.new()
+    self.OnInputChanged = Signal.new()
 
     self._IsActionBinding = true
 
