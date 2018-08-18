@@ -43,7 +43,7 @@ DigitalInputBindingManager.__index = DigitalInputBindingManager
 
 function DigitalInputBindingManager:Destroy()
     ContextActionService:UnbindAction(self.BindActionName)
-
+    
     self.InputEnum = nil
     self.InputBinding = nil
 
@@ -59,8 +59,9 @@ function DigitalInputBindingManager.new(inputEnum, inputBinding)
     self.InputEnum = inputEnum
     self.InputBinding = inputBinding
     self.BindActionName = "DigitalInputBindingManager_" .. inputEnum.Name
+
     
-    local function onInput(inputName, userInputState, inputObject)
+    local function OnInput(inputName, userInputState, inputObject)
         if (userInputState == Enum.UserInputState.Begin) then
             inputBinding.Input	= 1
         elseif (userInputState == Enum.UserInputState.Change) then
@@ -70,7 +71,7 @@ function DigitalInputBindingManager.new(inputEnum, inputBinding)
         end
     end
 
-    ContextActionService:BindAction(self.BindActionName, onInput, false, inputEnum)
+    ContextActionService:BindAction(self.BindActionName, OnInput, false, inputEnum)
 
 
     return self
@@ -86,7 +87,7 @@ DigitalInputSystem.InputBindingManagers = {}
 function DigitalInputSystem:AddInputBindingFromEnum(enumItem)
     local bindingName = enumItem.Name
 
-    table.insert(self.InputBindingList, enumItem.Name)
+    table.insert(self.InputBindingList, bindingName)
     self.InputEnums[bindingName] = enumItem
 end
 
@@ -117,9 +118,11 @@ end
 function DigitalInputSystem:BindingRemoved(name, inputBinding)
     local inputBindingManager = self.InputBindingManagers[name]
 
-    inputBindingManager:Destroy()
+    if (inputBindingManager ~= nil) then
+        inputBindingManager:Destroy()
 
-    self.InputBindingManagers[name] = nil
+        self.InputBindingManagers[name] = nil
+    end
 end
 
 
