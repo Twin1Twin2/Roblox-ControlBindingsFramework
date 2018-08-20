@@ -20,20 +20,6 @@ ControlBindingsFramework.InputSystem = InputSystem
 ControlBindingsFramework._UpdateConnection = nil
 
 
-function ControlBindingsFramework:Enable()
-    local function UpdateEngine()
-        self.Engine:Update()
-    end
-
-    RunService:BindToRenderStep("ControlBindingsFramework_EngineUpdate", Enum.RenderPriority.Input.Value + 1, UpdateEngine)
-end
-
-
-function ControlBindingsFramework:Disable()
-    RunService:UnbindFromRenderStep("ControlBindingsFramework_EngineUpdate")
-end
-
-
 function ControlBindingsFramework:Get() --until i figure stuff out
     return self.Engine
 end
