@@ -1,4 +1,5 @@
 
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local ActionBinding = require(script.Parent.ActionBinding)
@@ -7,6 +8,23 @@ local InputBinding = require(script.Parent.InputBinding)
 local Table = require(script.Parent.Table)
 local TableContains = Table.Contains
 local AttemptRemovalFromTable = Table.AttemptRemovalFromTable
+
+local function AltDeepCopy(source)   --copied from RobloxComponentSystem by tiffany352
+	if typeof(source) == 'table' then
+		local new = {}
+		for key, value in pairs(source) do
+			new[AltDeepCopy(key)] = AltDeepCopy(value)
+		end
+		return new
+	end
+	return source
+end
+
+local function AltMerge(to, from)   --copied from RobloxComponentSystem by tiffany352
+	for key, value in pairs(from or {}) do
+		to[DeepCopy(key)] = DeepCopy(value)
+	end
+end
 
 
 local CBEngine = {
@@ -48,6 +66,10 @@ function CBEngine:_RemoveActionBinding(name, actionBinding)
     actionBinding.Engine = nil
 
     self._ActionBindings[name] = nil
+
+    if (actionBinding._WasCreatedByEngine == true) then
+        actionBinding:Destroy()
+    end
 end
 
 
@@ -63,6 +85,7 @@ function CBEngine:AddActionBinding(actionBinding, inputBindingNames)
         end
 
         actionBinding = ActionBinding.new(actionBindingName)
+        actionBinding._WasCreatedByEngine = true
     else
         assert(self:IsActionBinding(actionBinding) == true)
 
@@ -76,13 +99,15 @@ function CBEngine:AddActionBinding(actionBinding, inputBindingNames)
     end
 
     if (type(inputBindingNames) == "table") then
-        --Table.Merge(inputBindingNames, actionBinding.InputBindingList)
+        AltMerge(inputBindingNames, actionBinding.InputBindingList)
     else
         inputBindingNames = actionBinding.InputBindingList
     end
 
     self:_AddActionBinding(actionBindingName, actionBinding)
     self:AddInputBindingsToAction(actionBinding, inputBindingNames)
+
+    return actionBinding
 end
 
 
@@ -92,6 +117,10 @@ function CBEngine:RemoveActionBinding(actionBinding)
     if (type(actionBinding) == "string") then
         actionBindingName = actionBinding
         actionBinding = self:GetActionBinding(actionBindingName)
+
+        if (actionBinding == nil) then
+            return
+        end
     else
         assert(self:IsActionBinding(actionBinding) == true)
 
@@ -104,6 +133,29 @@ function CBEngine:RemoveActionBinding(actionBinding)
 
     self:_RemoveActionBinding(actionBindingName, actionBinding)
 
+end
+
+
+function CBEngine:SetActionBinding(actionBindingName, inputBindingNames, clearOldBindings)
+    assert(type(actionBindingName) == "string")
+    assert(type(inputBindingNames) == "table")
+
+    local actionBinding = self:GetActionBinding(actionBindingName)
+
+    if (actionBinding == nil) then
+        actionBinding = self:AddActionBinding(actionBindingName, inputBindingNames)
+    else
+        actionBinding:SetInputBindings(inputBindingNames, clearOldBindings)
+    end
+
+    return actionBinding
+end
+
+
+function CBEngine:SetActionBindings(actionBindings, clearOldBindings, clearActionBindings)
+    for actionBindingName, inputBindingNames in pairs(actionBindings) do
+        self:SetActionBinding(actionBindingName, inputBindingNames, clearOldBindings)
+    end
 end
 
 
@@ -373,6 +425,17 @@ end
 function CBEngine:AddInputSystem(inputSystem, initialize)
     assert(self:IsInputSystem(inputSystem) == true)
 
+    local inputSystemName = inputSystem.Name
+    local otherInputSystem = self:GetInputSystem(inputSystemName)
+
+    if (otherInputSystem ~= nil) then
+        if (otherInputSystem == inputSystem) then
+            return
+        else
+            error("Input System already exists with the name " .. inputSystemName .. "!")
+        end
+    end
+
     self:_AddInputSystem(inputSystem)
 
     if (initialize ~= false) then
@@ -384,7 +447,20 @@ end
 function CBEngine:RemoveInputSystem(inputSystem)
     assert(self:IsInputSystem(inputSystem) == true)
 
+    if (TableContains(self._InputSystems, inputSystem) == false) then
+        return
+    end
+
     self:_RemoveInputSystem(inputSystem)
+end
+
+
+function CBEngine:SetInputSystems(inputSystemsList)
+    assert(type(inputSystemsList) == "table")
+
+    for _, inputSystem in pairs(inputSystemsList) do
+        self:AddInputSystem(inputSystem)
+    end
 end
 
 
@@ -415,29 +491,52 @@ function CBEngine:Update()
 end
 
 
-function CBEngine:Destroy()
+function CBEngine:SetConfiguration(config)
+    --clear old config?
 
+    local inputSystems = config.InputSystems or {}
+    local actionBindings = config.ActionBindings or {}
+
+    self:SetInputSystems(inputSystems)
+    self:SetActionBindings(actionBindings)
 end
 
 
-function CBEngine:SetConfiguration(config)
-    --clear old config
-
-    local inputSystems = config.InputSystems
-    local actionBindings = config.ActionBindings
-
-    for _, inputSystem in pairs(inputSystems) do
-        self:AddInputSystem(inputSystem)
+function CBEngine:Enable()
+    if (self.IsEnabled == true) then
+        return
     end
 
-    for actionBindingName, inputBindingNames in pairs(actionBindings) do
-        self:AddActionBinding(actionBindingName, inputBindingNames)
+    local function UpdateEngine()
+        self:Update()
     end
+
+    RunService:BindToRenderStep("ControlBindingsEngine_Update", Enum.RenderPriority.Input.Value + 1, UpdateEngine)
+
+    self.IsEnabled = true
+end
+
+
+function CBEngine:Disable()
+    if (self.IsEnabled == false) then
+        return
+    end
+
+    RunService:UnbindFromRenderStep("ControlBindingsEngine_Update")
+
+    self.IsEnabled = false
+end
+
+
+function CBEngine:Destroy()
+    self:Disable()
 end
 
 
 function CBEngine.new()
     local self = setmetatable({}, CBEngine)
+
+    self.IsEnabled = false
 
     self._ActionBindings = {}
     self._InputBindings = {}
