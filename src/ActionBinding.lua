@@ -33,6 +33,19 @@ function ActionBinding:UnregisterInputBinding(name, inputBinding)
 end
 
 
+function ActionBinding:SetInputBindings(inputBindingNames, clearOldBindings)
+    assert(type(inputBindingNames) == "table")
+
+    if (clearOldBindings == true) then
+        self:ClearInputBindings()
+    end
+
+    for _, inputBindingName in pairs(inputBindingNames) do
+        self:AddInputBinding(inputBindingName)
+    end
+end
+
+
 function ActionBinding:AddInputBinding(name)
     assert(type(name) == "string")
     assert(self.Engine ~= nil)
@@ -46,6 +59,17 @@ function ActionBinding:RemoveInputBinding(name)
     assert(self.Engine ~= nil)
 
     self.Engine:RemoveInputBindingsFromAction(self, name)
+end
+
+
+function ActionBinding:ClearInputBindings()
+    assert(self.Engine ~= nil)
+
+    for inputBindingName, inputBinding in pairs(self._InputBindings) do
+        if (inputBinding ~= nil) then
+            self.Engine:RemoveInputBindingsFromAction(self, inputBindingName)
+        end
+    end
 end
 
 
@@ -83,6 +107,11 @@ end
 
 
 function ActionBinding:Destroy()
+    self.Engine = nil
+
+    self.InputBindingList = nil
+    self._InputBindings = nil
+
     self.OnInputDown:Destroy()
     self.OnInputBegan:Destroy()
     self.OnInputEnded:Destroy()
@@ -113,6 +142,7 @@ function ActionBinding.new(name)
     self.OnInputChanged = Signal.new()
 
     self._IsActionBinding = true
+    self._WasCreatedByEngine = false
 
 
     return self
