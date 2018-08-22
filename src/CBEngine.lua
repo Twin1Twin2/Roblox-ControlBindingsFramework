@@ -8,17 +8,7 @@ local InputBinding = require(script.Parent.InputBinding)
 local Table = require(script.Parent.Table)
 local TableContains = Table.Contains
 local AttemptRemovalFromTable = Table.AttemptRemovalFromTable
-
-local function AltDeepCopy(source)   --copied from RobloxComponentSystem by tiffany352
-	if typeof(source) == 'table' then
-		local new = {}
-		for key, value in pairs(source) do
-			new[AltDeepCopy(key)] = AltDeepCopy(value)
-		end
-		return new
-	end
-	return source
-end
+local DeepCopy = Table.DeepCopy
 
 local function AltMerge(to, from)   --copied from RobloxComponentSystem by tiffany352
 	for key, value in pairs(from or {}) do
