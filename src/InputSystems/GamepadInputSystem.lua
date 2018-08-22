@@ -130,7 +130,10 @@ function GamepadInputSystem:UpdateInput(actionName, userInputState, inputObject)
     local keyCodeName = keyCode.Name
     local inputName = GAMEPAD_INPUT_ENUMTYPES[keyCodeName]
 
-    assert(inputName ~= nil)
+    if (inputName == nil and keyCode == Enum.KeyCode.Unknown) then
+        self:ClearInput()
+        return
+    end
 
     if (GAMEPAD_THUMBSTICK_INPUTS[keyCodeName]) then
         self:UpdateThumbstick(inputName, userInputState, inputObject)
